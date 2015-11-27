@@ -64,14 +64,14 @@
 	  value: true
 	});
 
-	exports.default = /*@ngInject*/function ($http) {
+	exports.default = /*@ngInject*/function ($http, $q) {
 	  var factory = {};
 
 	  factory.fetch = function () {
-	    return $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
+	    return $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
 	      factory.all = response.data;
 	      return response.data;
-	    });
+	    }));
 	  };
 
 	  factory.byRegion = function (id) {
