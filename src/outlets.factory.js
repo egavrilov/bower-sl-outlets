@@ -1,14 +1,16 @@
-export default /*@ngInject*/ function ($http, $q) {
+export default /*@ngInject*/ function ($http, $q, $timeout) {
   let factory = {};
+  let fetchInProgress;
 
-  factory.fetch = function () {
-    return $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
+  factory.fetch = () => fetchInProgress ? factory.fetching : fetch();
+
+  factory.getOutlets = () =>
+    $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
       factory.all = response.data;
       return response.data;
     }));
-  };
 
-  factory.byRegion = function (id) {
+  factory.byRegion = (id) => {
     if (!factory._byRegion) {
       factory._byRegion = {};
     }
@@ -19,6 +21,20 @@ export default /*@ngInject*/ function ($http, $q) {
 
     return factory._byRegion[id];
   };
+
+  function fetch() {
+    fetchInProgress = true;
+    factory.fetching = factory.getOutlets();
+
+    $timeout(() => {
+      factory.fetching.finally(() => {
+        factory.fetching = null;
+        fetchInProgress = false;
+      });
+    });
+
+    return factory.fetching;
+  }
 
   return factory;
 }

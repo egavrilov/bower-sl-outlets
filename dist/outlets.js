@@ -64,10 +64,15 @@
 	  value: true
 	});
 
-	exports.default = /*@ngInject*/function ($http, $q) {
+	exports.default = /*@ngInject*/function ($http, $q, $timeout) {
 	  var factory = {};
+	  var fetchInProgress = undefined;
 
 	  factory.fetch = function () {
+	    return fetchInProgress ? factory.fetching : fetch();
+	  };
+
+	  factory.getOutlets = function () {
 	    return $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
 	      factory.all = response.data;
 	      return response.data;
@@ -87,6 +92,20 @@
 
 	    return factory._byRegion[id];
 	  };
+
+	  function fetch() {
+	    fetchInProgress = true;
+	    factory.fetching = factory.getOutlets();
+
+	    $timeout(function () {
+	      factory.fetching.finally(function () {
+	        factory.fetching = null;
+	        fetchInProgress = false;
+	      });
+	    });
+
+	    return factory.fetching;
+	  }
 
 	  return factory;
 	};
