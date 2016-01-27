@@ -67,6 +67,7 @@
 	exports.default = /*@ngInject*/function ($http, $q, $timeout) {
 	  var factory = {};
 	  var fetchInProgress = undefined;
+	  var outletsById = {};
 
 	  factory.fetch = function () {
 	    return fetchInProgress ? factory.fetching : fetch();
@@ -74,8 +75,10 @@
 
 	  factory.getOutlets = function () {
 	    return $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
-	      factory.all = response.data;
-	      return response.data;
+	      factory.all = response.data.filter(function (outlet) {
+	        return !outlet.is_franchise;
+	      });
+	      return factory.all;
 	    }));
 	  };
 
@@ -93,6 +96,16 @@
 	    return factory._byRegion[id];
 	  };
 
+	  factory.getId = function (id) {
+	    if (!outletsById[id]) {
+	      factory.getOutlets().then(function (outlets) {
+	        return outlets.reduce(reduceById, outletsById);
+	      });
+	    }
+
+	    return outletsById[id];
+	  };
+
 	  function fetch() {
 	    fetchInProgress = true;
 	    factory.fetching = factory.getOutlets();
@@ -105,6 +118,13 @@
 	    });
 
 	    return factory.fetching;
+	  }
+
+	  function reduceById(_outletsById, outlet) {
+	    if (outlet.id) {
+	      _outletsById[outlet.id] = outlet;
+	    }
+	    return _outletsById;
 	  }
 
 	  return factory;
