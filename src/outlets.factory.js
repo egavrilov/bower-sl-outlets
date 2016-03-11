@@ -1,13 +1,15 @@
-export default /*@ngInject*/ function ($http, $q, $timeout) {
+export default /*@ngInject*/ function ($http, $q, $timeout, $window) {
   let factory = {};
   let fetchInProgress;
   let outletsById = {};
 
   factory.fetch = () => fetchInProgress ? factory.fetching : fetch();
+  factory.all = angular.fromJson($window.sessionStorage.getItem('sl.outlets'));
 
   factory.getOutlets = () =>
     $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
       factory.all = response.data.filter(outlet => !outlet.is_franchise);
+      $window.sessionStorage.setItem('sl.outlets', angular.toJson(factory.all));
       return factory.all;
     }));
 

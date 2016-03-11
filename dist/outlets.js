@@ -64,7 +64,7 @@
 	  value: true
 	});
 
-	exports.default = /*@ngInject*/function ($http, $q, $timeout) {
+	exports.default = /*@ngInject*/function ($http, $q, $timeout, $window) {
 	  var factory = {};
 	  var fetchInProgress = undefined;
 	  var outletsById = {};
@@ -72,12 +72,14 @@
 	  factory.fetch = function () {
 	    return fetchInProgress ? factory.fetching : fetch();
 	  };
+	  factory.all = angular.fromJson($window.sessionStorage.getItem('sl.outlets'));
 
 	  factory.getOutlets = function () {
 	    return $q.when(factory.all || $http.get('http://api.love.sl/v2/outlets/').then(function (response) {
 	      factory.all = response.data.filter(function (outlet) {
 	        return !outlet.is_franchise;
 	      });
+	      $window.sessionStorage.setItem('sl.outlets', angular.toJson(factory.all));
 	      return factory.all;
 	    }));
 	  };
